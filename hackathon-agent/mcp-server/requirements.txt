@@ -1,0 +1,14 @@
+# AWS SDK
+boto3>=1.42.1
+botocore>=1.42.1
+
+# MCP server
+fastmcp>=0.5.0
+mcp>=1.9.0
+
+# GitHub API
+requests>=2.31.0
+
+# AgentCore
+bedrock-agentcore>=1.1.0
+aws-opentelemetry-distro>=0.12.1

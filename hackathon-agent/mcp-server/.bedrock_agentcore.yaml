@@ -1,0 +1,19 @@
+default_agent: k8s_expertise_mcp
+agents:
+  k8s_expertise_mcp:
+    name: k8s_expertise_mcp
+    language: python
+    entrypoint: mcp_expertise_server.py
+    deployment_type: container
+    platform: linux/arm64
+    container_runtime: none
+    aws:
+      region: us-west-2
+      execution_role_auto_create: false
+      ecr_auto_create: true
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: MCP
+      observability:
+        enabled: true
