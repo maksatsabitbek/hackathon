@@ -1,6 +1,6 @@
-"""K8s Expert Finder -- Streamlit Dashboard
+"""Knowledge Map -- Streamlit Dashboard
 
-Interactive frontend for the Kubernetes Expert Finder Agent.
+Interactive frontend for the Knowledge Map Agent.
 Features:
   - Heatmap: contributors vs domains with color-coded expertise scores
   - Domain cards: 3 identified domains with top experts
@@ -203,7 +203,7 @@ def invoke_agent(prompt: str) -> str:
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
-    page_title="K8s Expert Finder",
+    page_title="Knowledge Map",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -240,7 +240,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("🔍 Kubernetes Expert Finder")
+st.title("🔍 Knowledge Map")
 st.caption("Find the right person to help with your Kubernetes issues -- powered by AI analysis of git commit history")
 
 tab_dashboard, tab_chat, tab_profiles = st.tabs(["📊 Dashboard", "💬 Chat", "👤 Profiles"])
@@ -291,7 +291,7 @@ with tab_dashboard:
     df = build_heatmap_data()
     if df is not None and not df.empty:
         fig = render_heatmap(df)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="heatmap_chart")
 
         # Per-domain bar charts
         st.subheader("Domain Breakdown")
@@ -299,14 +299,14 @@ with tab_dashboard:
         for i, d in enumerate(domains):
             with bar_cols[i]:
                 bar_fig = render_domain_bar(df, d["name"])
-                st.plotly_chart(bar_fig, use_container_width=True)
+                st.plotly_chart(bar_fig, use_container_width=True, key=f"domain_bar_{i}_{d['name']}")
     else:
         st.info("No expertise data available yet.")
 
 
 # ---- TAB 2: CHAT ----
 with tab_chat:
-    st.subheader("Ask the Expert Finder Agent")
+    st.subheader("Ask the Knowledge Map Agent")
     st.caption(
         "Ask questions like: \"Who can help me with scheduling issues?\" or "
         "\"I have a networking problem with kube-proxy, who should I contact?\""
@@ -340,7 +340,7 @@ with tab_chat:
                 for d in domains:
                     if d["name"].lower() in prompt.lower() or d["name"].lower() in str(response_text).lower():
                         chart = render_domain_bar(df, d["name"])
-                        st.plotly_chart(chart, use_container_width=True)
+                        st.plotly_chart(chart, use_container_width=True, key=f"chat_chart_{len(st.session_state.messages)}")
                         break
 
             msg_data = {"role": "assistant", "content": response_text}
@@ -389,7 +389,7 @@ with tab_profiles:
                 }
                 if len(contributor_scores) >= 2:
                     radar = render_contributor_radar(contributor_scores, selected)
-                    st.plotly_chart(radar, use_container_width=True)
+                    st.plotly_chart(radar, use_container_width=True, key=f"radar_{selected}")
 
                 # Domain details
                 st.divider()

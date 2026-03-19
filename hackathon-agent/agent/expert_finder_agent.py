@@ -1,5 +1,5 @@
 <<<<<<< Updated upstream
-"""Kubernetes Expert Finder Agent
+"""Knowledge Map Agent
 
 Connects to the K8s Expertise MCP server to analyze GitHub repositories
 and find domain experts based on git commit history. Deployed to AWS
@@ -104,7 +104,7 @@ def agent_handler(payload: Dict[str, Any]):
     user_input = payload.get("prompt", "")
     print(f"Processing: {user_input[:100]}{'...' if len(user_input) > 100 else ''}")
 
-    SYSTEM_PROMPT = """You are a Kubernetes Expert Finder Agent. You help developers and engineers find \
+    SYSTEM_PROMPT = """You are a Knowledge Map Agent. You help developers and engineers find \
 the right person to consult about Kubernetes issues based on git commit history analysis \
 from the kubernetes/kubernetes GitHub repository.
 
@@ -173,7 +173,7 @@ Do not guess or modify domain names."""
 if __name__ == "__main__":
     app.run()
 =======
-"""Kubernetes Expert Finder Agent
+"""Knowledge Map Agent
 
 Connects to the K8s Expertise MCP server to analyze GitHub repositories
 and find domain experts based on git commit history. Deployed to AWS
@@ -269,7 +269,7 @@ model = BedrockModel(
 
 agent = None
 
-SYSTEM_PROMPT = """You are a Kubernetes Expert Finder Agent. You help developers and engineers find \
+SYSTEM_PROMPT = """You are a Knowledge Map Agent. You help developers and engineers find \
 the right person to consult about Kubernetes issues based on git commit history analysis \
 from the kubernetes/kubernetes GitHub repository.
 
