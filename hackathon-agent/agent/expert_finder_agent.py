@@ -65,14 +65,17 @@ class SigV4Auth(httpx.Auth):
         yield request
 
 
-expertise_mcp_client = None
-if mcp_server_url:
+# Initialize MCP client factory (don't open connection at startup)
+def get_mcp_client():
+    """Create a fresh MCP client for each invocation."""
+    if not mcp_server_url:
+        return None
     try:
         headers = {
             "Accept": "application/json, text/event-stream",
             "Content-Type": "application/json",
         }
-        expertise_mcp_client = MCPClient(
+        return MCPClient(
             lambda: streamablehttp_client(
                 url=mcp_server_url,
                 headers=headers,
@@ -80,21 +83,27 @@ if mcp_server_url:
                 timeout=300.0,
             )
         )
-        print("MCP client initialized for expertise analysis")
     except Exception as e:
-        print(f"Failed to initialize MCP client: {e}")
-        expertise_mcp_client = None
+        print(f"Failed to create MCP client: {e}")
+        return None
+
+print("MCP client factory configured")
 
 model = BedrockModel(
     model_id=os.environ.get(
-        "AGENT_MODEL_ID", "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+        "AGENT_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     ),
     region_name=REGION,
 )
 
-agent = None
 
-SYSTEM_PROMPT = """You are a Kubernetes Expert Finder Agent. You help developers and engineers find \
+@app.entrypoint
+def agent_handler(payload: Dict[str, Any]):
+    """Main handler for the Expert Finder Agent."""
+    user_input = payload.get("prompt", "")
+    print(f"Processing: {user_input[:100]}{'...' if len(user_input) > 100 else ''}")
+
+    SYSTEM_PROMPT = """You are a Kubernetes Expert Finder Agent. You help developers and engineers find \
 the right person to consult about Kubernetes issues based on git commit history analysis \
 from the kubernetes/kubernetes GitHub repository.
 
@@ -123,44 +132,30 @@ commit history and file structure using AI analysis.
 Important: Domain names must be used exactly as returned by list_domains(). \
 Do not guess or modify domain names."""
 
-print("Agent model and system prompt configured")
-
-
-@app.entrypoint
-def agent_handler(payload: Dict[str, Any]):
-    """Main handler for the Expert Finder Agent."""
-    global agent
-
-    user_input = payload.get("prompt", "")
-    print(f"Processing: {user_input[:100]}{'...' if len(user_input) > 100 else ''}")
-
     try:
-        if agent is None:
-            print("Initializing agent with available tools")
-            tools = []
-
-            if expertise_mcp_client:
-                try:
-                    with expertise_mcp_client:
-                        mcp_tools = expertise_mcp_client.list_tools_sync()
-                        tools.extend(mcp_tools)
-                        print(f"Added {len(mcp_tools)} MCP tools")
-                except Exception as e:
-                    print(f"Failed to get tools from MCP client: {e}")
-
-            agent = Agent(
-                model=model,
-                tools=tools,
-                system_prompt=SYSTEM_PROMPT,
-            )
-            print(f"Agent initialized with {len(tools)} tool(s)")
-        else:
-            print("Using existing agent instance with memory context")
-
-        if expertise_mcp_client:
-            with expertise_mcp_client:
+        # Create a fresh MCP client for this invocation
+        mcp_client = get_mcp_client()
+        
+        if mcp_client:
+            with mcp_client:
+                # Get tools inside the MCP context so they have access to the active session
+                tools = mcp_client.list_tools_sync()
+                print(f"Loaded {len(tools)} MCP tools in active session")
+                
+                # Create Agent inside the MCP context with fresh tools
+                agent = Agent(
+                    model=model,
+                    tools=tools,
+                    system_prompt=SYSTEM_PROMPT,
+                )
                 response = agent(user_input)
         else:
+            # No MCP client available, create agent without tools
+            agent = Agent(
+                model=model,
+                tools=[],
+                system_prompt=SYSTEM_PROMPT,
+            )
             response = agent(user_input)
 
         response_text = response.message["content"][0]["text"]

@@ -7,7 +7,7 @@ import sys
 
 REGION = "us-west-2"
 
-session_id = str(uuid.uuid4()) + "-" + str(uuid.uuid4())[:8]
+session_id = str(uuid.uuid4())
 
 agent_core_client = boto3.client("bedrock-agentcore", region_name=REGION)
 
