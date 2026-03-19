@@ -12,8 +12,11 @@ import httpx
 from typing import List, Dict, Any
 from requests_aws4auth import AWS4Auth
 
-# TODO-1: Import strands agent and MCP related packages
-
+from strands import Agent
+from strands.models import BedrockModel
+from strands_tools import retrieve
+from strands.tools.mcp import MCPClient
+from mcp.client.streamable_http import streamablehttp_client
 
 # Initialize Bedrock client for Knowledge Base queries
 bedrock_client = boto3.client(
@@ -27,9 +30,7 @@ ssm = boto3.client('ssm', region_name=os.environ.get("AWS_REGION", "us-west-2"))
 # Get Knowledge Base ID from SSM Parameter Store
 kb_id = ''
 try:
-    
-    # TODO-2: Add code to read the SSM Parameter for knowledgebase ID
-    
+    response = ssm.get_parameter(Name='telco_anomaly_resolution_runbooks_kb')
     kb_id = response['Parameter']['Value']
     print("kb_id :", kb_id)
 except Exception:
@@ -40,9 +41,7 @@ os.environ["KNOWLEDGE_BASE_ID"] = kb_id
 # Get MCP Server URL from SSM Parameter Store
 mcp_server_url = ''
 try:
-
-    # TODO-3: Add code to read the SSM Parameter for MCP server URL
-    
+    response = ssm.get_parameter(Name='telco_anomaly_detection_mcp_server_url')
     mcp_server_url = response['Parameter']['Value']
     print("MCP Server URL:", mcp_server_url)
 except Exception as e:
@@ -92,8 +91,18 @@ anomaly_detection_client = None
 if mcp_server_url:
     try:
         
-        #TODO-4: Add code snippet to create MCP client for the anomaly detection MCP server.
-
+        headers = {
+            "Accept": "application/json, text/event-stream",
+            "Content-Type": "application/json"
+        }
+        anomaly_detection_client = MCPClient(lambda:
+            streamablehttp_client(
+                url=mcp_server_url,
+                headers=headers,
+                auth=SigV4Auth("bedrock-agentcore", "us-west-2"),
+                timeout=30.0
+             )
+        )
         print("✅ MCP client initialized for anomaly detection")
     except Exception as e:
         print(f"❌ Failed to initialize MCP client: {e}")
@@ -101,16 +110,40 @@ if mcp_server_url:
 
 # Initialize the agent model in global scope. Using Haiku 4.5 global inference profile for faster responses
 
-#TODO-5: Create model object with the choice of model provider you like to use. For this workshop, we will be using Amazon Bedrock hosted Anthropic Claude Haiku 4.5 model.
-
+model = BedrockModel(
+    model_id=os.environ.get("AGENT_MODEL_ID", "global.anthropic.claude-haiku-4-5-20251001-v1:0"),
+    region_name=os.environ.get("AWS_REGION", "us-west-2")
+)
 
 # global agent instance for conversation memory persistence
 agent = None
 
 # System prompt for the agent
 
-#TODO-6: Add the system prompt to provide instructions to your agent
+SYSTEM_PROMPT = """You are a Telecom Network Operations Agent responsible for maintaining service quality across a Tier-1 telecom operator's network.
 
+Your responsibilities:
+1. **Anomaly Detection**: Monitor and detect network anomalies across different markets using MCP tools
+2. **Impact Analysis**: Assess the business and customer impact of incidents
+3. **Resolution Coordination**: Retrieve and apply resolution procedures from the knowledge base
+
+When handling an incident, follow this workflow:
+1. Use MCP tools to detect anomalies in the specified market
+2. Analyze the impact for prioritization
+3. For each critical anomaly, retrieve resolution procedures from the knowledge base using the retrieve tool
+
+Response Guidelines:
+- Be concise and action-oriented
+- Always include severity level and customer impact
+- Suggest escalation when appropriate
+
+Market Coverage: Denver, Phoenix, Seattle, Portland, Las Vegas, Salt Lake City, San Francisco, Los Angeles, Dallas, Houston, Chicago, New York
+
+Available Tools:
+- MCP tools for anomaly detection and analysis (if MCP server is available)
+- retrieve: Get resolution procedures from knowledge base for identified anomalies
+
+Remember: Service quality and customer experience are paramount. Always make use of the internal resources for accurate actions and do not give generic recommendations not documented in the company documentation."""
 
 # Agent initialization note:
 # The agent is created on first invocation and reused for memory persistence.
@@ -143,27 +176,39 @@ def agent_handler(payload: Dict[str, Any]):
             print(f"🆕 Initializing agent with available tools")
 
             # Build tools list            
-            #TODO-7: Create a tool list with retrieve tool
+            tools = [retrieve]
             
             if anomaly_detection_client:
                 try:
                     # Add MCP client tools if available
                     with anomaly_detection_client:
                         
-                        #TODO-8: Extend the tool list with the tools supported by anomaly detection MCP server.
-
+                        mcp_tools = anomaly_detection_client.list_tools_sync()
+                        tools.extend(mcp_tools)
                         print(f"✅ Added {len(mcp_tools)} MCP tools from anomaly_detection_client")                                           
                 except Exception as e:
                     print(f"⚠️ Failed to get tools from MCP client: {e}")          
 
             # Create agent with all available tools            
-            #TODO-9: Initialize the agent with all necessary tools and model created in earlier steps.
-
+            # Initialize the agent with all available tools
+            agent = Agent(
+                model=model,
+                tools=tools,
+                system_prompt=SYSTEM_PROMPT
+            )
+            print(f"✅ Agent initialized with {len(tools)} tool(s)")
         else:
             print(f"♻️ Using existing agent instance with memory context")
 
     
-        #TODO-10: code snippet to invoke the agent
+        # Invoke the agent
+        if anomaly_detection_client:
+            # Use MCP context for tool execution
+            with anomaly_detection_client:
+                response = agent(user_input)
+        else:
+            # No MCP tools, use agent directly
+            response = agent(user_input)
 
 
         # print(f"✅ Agent response generated :: {response}")

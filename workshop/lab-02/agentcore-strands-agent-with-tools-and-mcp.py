@@ -16,9 +16,9 @@ from strands.models import BedrockModel
 from strands_tools import retrieve
 from strands.tools.mcp.mcp_client import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
-
-
-#TODO-1: Import the runtime app library and initiaze the app
+from bedrock_agentcore.runtime import BedrockAgentCoreApp
+# Initialize the app
+app = BedrockAgentCoreApp()
 
 
 # Initialize Bedrock client for Knowledge Base queries
@@ -153,7 +153,7 @@ print("Defined the model and system prompt")
 # MCP client tools require active context managers, so the agent is invoked
 # within the appropriate 'with client:' blocks.
 
-#TODO-2: Add @app.entrypoint decorator to the method agent_handler.
+@app.entrypoint
 
 def agent_handler(payload: Dict[str, Any]):
     """Main handler for the Agent.
@@ -229,4 +229,4 @@ def agent_handler(payload: Dict[str, Any]):
 
 
 if __name__ == "__main__":
-    #TODO-3: call app.run() in the main method
+    app.run()

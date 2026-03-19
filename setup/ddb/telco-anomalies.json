@@ -1,0 +1,310 @@
+[
+  {
+    "anomaly_id": "ANO-DAL-20251013145236-000",
+    "market": "Dallas",
+    "timestamp": "2025-10-13T14:52:36.403816",
+    "type": "POWER_FAILURE",
+    "severity": "P2",
+    "component": "PGW",
+    "description": "Overload condition on PGW serving Dallas stadium during event",
+    "affected_customers": 1024,
+    "kpi_impact": {
+      "cssr_degradation": "9.2%",
+      "drop_rate": "1.0%",
+      "throughput_reduction": "18.4%"
+    },
+    "status": "INVESTIGATING",
+    "cell_sites": [
+      "DAL-ENB-3048"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-DAL-20251012235236-001",
+    "market": "Dallas",
+    "timestamp": "2025-10-12T23:52:36.403816",
+    "type": "THROUGHPUT_DEGRADATION",
+    "severity": "P1",
+    "component": "PCRF",
+    "description": "Hardware malfunction in Dallas EPC causing authentication failures",
+    "affected_customers": 7210,
+    "kpi_impact": {
+      "cssr_degradation": "6.6%",
+      "drop_rate": "4.6%",
+      "throughput_reduction": "34.1%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "DAL-ENB-2283"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-DAL-20251013055236-002",
+    "market": "Dallas",
+    "timestamp": "2025-10-13T05:52:36.403816",
+    "type": "COVERAGE_HOLE",
+    "severity": "P2",
+    "component": "HSS",
+    "description": "Power failure at major hub site affecting multiple sectors in Dallas",
+    "affected_customers": 8521,
+    "kpi_impact": {
+      "cssr_degradation": "8.6%",
+      "drop_rate": "4.4%",
+      "throughput_reduction": "36.8%"
+    },
+    "status": "ACTIVE",
+    "cell_sites": [
+      "DAL-ENB-3858",
+      "DAL-ENB-9148"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-SEA-20251013095236-000",
+    "market": "Seattle",
+    "timestamp": "2025-10-13T09:52:36.403816",
+    "type": "NETWORK_CONGESTION",
+    "severity": "P1",
+    "component": "SGW",
+    "description": "Hardware malfunction in Seattle EPC causing authentication failures",
+    "affected_customers": 8758,
+    "kpi_impact": {
+      "cssr_degradation": "2.8%",
+      "drop_rate": "2.2%",
+      "throughput_reduction": "27.7%"
+    },
+    "status": "ACTIVE",
+    "cell_sites": [
+      "SEA-ENB-5772"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-SEA-20251013095236-001",
+    "market": "Seattle",
+    "timestamp": "2025-10-13T09:52:36.403816",
+    "type": "CELL_OUTAGE",
+    "severity": "P4",
+    "component": "SMF",
+    "description": "Interference detected on multiple frequencies in Seattle business district",
+    "affected_customers": 2041,
+    "kpi_impact": {
+      "cssr_degradation": "5.9%",
+      "drop_rate": "1.8%",
+      "throughput_reduction": "30.9%"
+    },
+    "status": "INVESTIGATING",
+    "cell_sites": [
+      "SEA-ENB-9808",
+      "SEA-ENB-3226",
+      "SEA-ENB-8395"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-SEA-20251013195236-002",
+    "market": "Seattle",
+    "timestamp": "2025-10-13T19:52:36.403816",
+    "type": "HANDOVER_FAILURE",
+    "severity": "P1",
+    "component": "SMF",
+    "description": "Overload condition on PGW serving Seattle stadium during event",
+    "affected_customers": 1396,
+    "kpi_impact": {
+      "cssr_degradation": "8.6%",
+      "drop_rate": "4.4%",
+      "throughput_reduction": "34.1%"
+    },
+    "status": "INVESTIGATING",
+    "cell_sites": [
+      "SEA-ENB-7820",
+      "SEA-ENB-4963",
+      "SEA-ENB-5983"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LAS-20251013005236-000",
+    "market": "Las Vegas",
+    "timestamp": "2025-10-13T00:52:36.403816",
+    "type": "LATENCY_SPIKE",
+    "severity": "P2",
+    "component": "UPF",
+    "description": "Hardware malfunction in Las Vegas EPC causing authentication failures",
+    "affected_customers": 9710,
+    "kpi_impact": {
+      "cssr_degradation": "7.9%",
+      "drop_rate": "2.8%",
+      "throughput_reduction": "22.2%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "LAS-ENB-9635",
+      "LAS-ENB-1487",
+      "LAS-ENB-9135"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LAS-20251013075236-001",
+    "market": "Las Vegas",
+    "timestamp": "2025-10-13T07:52:36.403816",
+    "type": "CELL_OUTAGE",
+    "severity": "P3",
+    "component": "PGW",
+    "description": "Unusual traffic spike causing congestion in Las Vegas network core",
+    "affected_customers": 5566,
+    "kpi_impact": {
+      "cssr_degradation": "6.3%",
+      "drop_rate": "2.8%",
+      "throughput_reduction": "23.6%"
+    },
+    "status": "ACTIVE",
+    "cell_sites": [
+      "LAS-ENB-9442",
+      "LAS-ENB-7270",
+      "LAS-ENB-4161",
+      "LAS-ENB-6737"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LAS-20251012235236-002",
+    "market": "Las Vegas",
+    "timestamp": "2025-10-12T23:52:36.403816",
+    "type": "CELL_OUTAGE",
+    "severity": "P1",
+    "component": "eNodeB",
+    "description": "Hardware malfunction in Las Vegas EPC causing authentication failures",
+    "affected_customers": 1928,
+    "kpi_impact": {
+      "cssr_degradation": "5.8%",
+      "drop_rate": "4.9%",
+      "throughput_reduction": "39.7%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "LAS-ENB-2580",
+      "LAS-ENB-8659",
+      "LAS-ENB-1919",
+      "LAS-ENB-2121",
+      "LAS-ENB-9054"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LAS-20251013125236-003",
+    "market": "Las Vegas",
+    "timestamp": "2025-10-13T12:52:36.403816",
+    "type": "HANDOVER_FAILURE",
+    "severity": "P3",
+    "component": "HSS",
+    "description": "Hardware malfunction in Las Vegas EPC causing authentication failures",
+    "affected_customers": 6134,
+    "kpi_impact": {
+      "cssr_degradation": "3.8%",
+      "drop_rate": "4.5%",
+      "throughput_reduction": "17.6%"
+    },
+    "status": "INVESTIGATING",
+    "cell_sites": [
+      "LAS-ENB-2197",
+      "LAS-ENB-2041"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LOS-20251013015236-000",
+    "market": "Los Angeles",
+    "timestamp": "2025-10-13T01:52:36.403816",
+    "type": "THROUGHPUT_DEGRADATION",
+    "severity": "P2",
+    "component": "Fiber Ring",
+    "description": "Overload condition on PGW serving Los Angeles stadium during event",
+    "affected_customers": 7625,
+    "kpi_impact": {
+      "cssr_degradation": "9.0%",
+      "drop_rate": "2.6%",
+      "throughput_reduction": "38.4%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "LOS-ENB-9160",
+      "LOS-ENB-1933"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LOS-20251013085236-001",
+    "market": "Los Angeles",
+    "timestamp": "2025-10-13T08:52:36.403816",
+    "type": "THROUGHPUT_DEGRADATION",
+    "severity": "P3",
+    "component": "MME",
+    "description": "Power failure at major hub site affecting multiple sectors in Los Angeles",
+    "affected_customers": 840,
+    "kpi_impact": {
+      "cssr_degradation": "5.1%",
+      "drop_rate": "1.5%",
+      "throughput_reduction": "23.0%"
+    },
+    "status": "ACTIVE",
+    "cell_sites": [
+      "LOS-ENB-2572",
+      "LOS-ENB-3745"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-LOS-20251013065236-002",
+    "market": "Los Angeles",
+    "timestamp": "2025-10-13T06:52:36.403816",
+    "type": "HIGH_PACKET_LOSS",
+    "severity": "P4",
+    "component": "PCRF",
+    "description": "Power failure at major hub site affecting multiple sectors in Los Angeles",
+    "affected_customers": 7462,
+    "kpi_impact": {
+      "cssr_degradation": "9.1%",
+      "drop_rate": "4.3%",
+      "throughput_reduction": "18.9%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "LOS-ENB-6232",
+      "LOS-ENB-6891",
+      "LOS-ENB-3761",
+      "LOS-ENB-6018",
+      "LOS-ENB-4052"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-DEN-20251013185236-000",
+    "market": "Denver",
+    "timestamp": "2025-10-13T18:52:36.403816",
+    "type": "NETWORK_CONGESTION",
+    "severity": "P3",
+    "component": "UPF",
+    "description": "Power failure at major hub site affecting multiple sectors in Denver",
+    "affected_customers": 6137,
+    "kpi_impact": {
+      "cssr_degradation": "7.7%",
+      "drop_rate": "1.6%",
+      "throughput_reduction": "35.3%"
+    },
+    "status": "RESOLVED",
+    "cell_sites": [
+      "DEN-ENB-7864"
+    ]
+  },
+  {
+    "anomaly_id": "ANO-DEN-20251013115236-001",
+    "market": "Denver",
+    "timestamp": "2025-10-13T11:52:36.403816",
+    "type": "CSSR_DEGRADATION",
+    "severity": "P2",
+    "component": "eNodeB",
+    "description": "Power failure at major hub site affecting multiple sectors in Denver",
+    "affected_customers": 9818,
+    "kpi_impact": {
+      "cssr_degradation": "7.9%",
+      "drop_rate": "3.1%",
+      "throughput_reduction": "35.6%"
+    },
+    "status": "ACTIVE",
+    "cell_sites": [
+      "DEN-ENB-1393",
+      "DEN-ENB-8943",
+      "DEN-ENB-2909"
+    ]
+  }
+]

@@ -11,7 +11,7 @@ import boto3
 
 
 region = "us-west-2"
-telco_networkops_agent_runtime_role = "telco-network-operations-agent-runtime-role"
+anomaly_mcp_runtime_role = "telco-anomalies-mcp-runtime-role"
 # Initialize IAM client
 iam = boto3.client('iam', region_name=region)
 
@@ -72,11 +72,10 @@ def put_inline_policy_if_changed(role_name: str, policy_name: str, policy_docume
         print(f"  ↳ Created inline policy: {policy_name}")
 
 
-def setup_agent_runtime_role():
-    """Create IAM role for Agent Runtime"""
-    print(" Setting up Agent Runtime Role")
-
-    role_name = telco_networkops_agent_runtime_role
+def setup_mcp_runtime_role():
+    """Create IAM role for MCP Server Runtime"""
+    print("Setting up MCP Server Runtime Role")
+    role_name = anomaly_mcp_runtime_role
 
     # Trust policy (Bedrock AgentCore can assume this role)
     trust_policy = {
@@ -92,7 +91,7 @@ def setup_agent_runtime_role():
     role_arn = create_role_if_not_exists(
         role_name,
         trust_policy,
-        "Execution role for Agent Runtime"
+        "Execution role for MCP Server Runtime (Anomaly Detection)"
     )
 
     # Attach basic execution policy for CloudWatch Logs
@@ -101,86 +100,11 @@ def setup_agent_runtime_role():
         'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
     )
 
-    # Inline policy for all agent permissions
-    agent_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "InvokeMCPServer",
-                "Effect": "Allow",
-                "Action": [
-                    "bedrock-agentcore:InvokeAgentRuntime",
-                    "bedrock-agentcore:GetAgentRuntime"
-                ],
-                "Resource": f"arn:aws:bedrock-agentcore:{region}:*:runtime/*"
-            },
-            {
-                "Sid": "ReadSSMParameters",
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParameter",
-                    "ssm:GetParameters",
-                    "ssm:GetParametersByPath"
-                ],
-                "Resource": f"arn:aws:ssm:{region}:*:parameter/*"
-            },
-            {
-                "Sid": "QueryKnowledgeBase",
-                "Effect": "Allow",
-                "Action": "bedrock:Retrieve",
-                "Resource": f"arn:aws:bedrock:{region}:*:knowledge-base/*"
-            },
-            {
-                "Sid": "InvokeBedrockModels",
-                "Effect": "Allow",
-                "Action": [
-                    "bedrock:InvokeModel",
-                    "bedrock:InvokeModelWithResponseStream"
-                ],
-                "Resource": [
-                    "arn:aws:bedrock:*::foundation-model/*",
-                    "arn:aws:bedrock:*::inference-profile/*",
-                    f"arn:aws:bedrock:*:*:inference-profile/*"
-                ]
-            },
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "aws-marketplace:ViewSubscriptions",
-                    "aws-marketplace:Subscribe",
-                    "aws-marketplace:Unsubscribe"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "XRayTracing",
-                "Effect": "Allow",
-                "Action": [
-                    "xray:PutTraceSegments",
-                    "xray:PutTelemetryRecords"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "CodeInterpreter",
-                "Effect": "Allow",
-                "Action": [
-                    "bedrock-agentcore:CreateCodeInterpreter",
-                    "bedrock-agentcore:StartCodeInterpreterSession",
-                    "bedrock-agentcore:InvokeCodeInterpreter",
-                    "bedrock-agentcore:StopCodeInterpreterSession",
-                    "bedrock-agentcore:DeleteCodeInterpreter",
-                    "bedrock-agentcore:ListCodeInterpreters",
-                    "bedrock-agentcore:GetCodeInterpreter",
-                    "bedrock-agentcore:GetCodeInterpreterSession",
-                    "bedrock-agentcore:ListCodeInterpreterSessions"
-                ],
-                "Resource": "*"
-            }
-        ]
-    }
-
-    put_inline_policy_if_changed(role_name, "AgentPermissions", agent_policy)
+    # Attach readonly access policy for Dynamodb
+    attach_policy_if_not_attached(
+        role_name,
+        'arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess'
+    )
 
     # Inline policy for ECR access (required by AgentCore Runtime to pull Docker images)
     ecr_policy = {
@@ -201,38 +125,39 @@ def setup_agent_runtime_role():
     return role_arn
 
 
-def deploy_agent():
-    """Deploy the Agent to AgentCore Runtime."""
+def deploy_mcp_server():
+    """Deploy the MCP server to AgentCore Runtime."""
 
-    print("Deploying telco network operations agent to AgentCore Runtime")
+    print("Deploying Anomaly Detection MCP Server to AgentCore Runtime")
     print(f"Using AWS region: {region}")
 
     # Get AWS account ID and construct IAM role ARN
     sts_client = boto3.client('sts', region_name=region)
     account_id = sts_client.get_caller_identity()['Account']
-    execution_role_arn = telco_networkops_agent_runtime_role
-    agent_name = "telco_networkops_agent"
+    execution_role_arn = anomaly_mcp_runtime_role
+    mcp_server_name = "telco_anomaly_mcp"
 
     print(f"Using execution role: {execution_role_arn}")
 
     # Initialize AgentCore Runtime
     agentcore_runtime = Runtime()
 
-    # Configure the agentcore runtime parameters
+    # Configure the runtime
     print("Configuring AgentCore Runtime...")
+    print("Note: MCP server will be publicly accessible (for Runtime-to-Runtime calls)")
+
     try:
-        
-        #TODO-1: Configure the agentcore runtime with necessary details
         # Use pre-created IAM role with all necessary permissions
         # Configure AgentCore Runtime with entrypoint agent, protocol, execution role, name
         response = agentcore_runtime.configure(
-            entrypoint="agentcore-strands-agent-with-tools-and-mcp.py",
+            entrypoint="mcp_anomaly_server.py",
             auto_create_execution_role=False,
             execution_role=execution_role_arn,
             auto_create_ecr=True,
             requirements_file="requirements.txt",
             region=region,
-            agent_name=agent_name
+            protocol="MCP",
+            agent_name=mcp_server_name
         )
         print("Configuration completed")
     except Exception as e:
@@ -240,15 +165,13 @@ def deploy_agent():
         sys.exit(1)
 
     # Launch the runtime
-    print("Launching Agent (this takes 5-8 minutes)...")
+    print("Launching MCP server (this takes 5-8 minutes)...")
 
     try:
-        
         launch_result = agentcore_runtime.launch()
-
         print(f"Launch initiated")
-        print(f"Agent ARN: {launch_result.agent_arn}")
-        print(f"Agent ID: {launch_result.agent_id}")
+        print(f"MCP/Agent ARN: {launch_result.agent_arn}")
+        print(f"MCP/Agent ID: {launch_result.agent_id}")
     except Exception as e:
         print(f"Launch failed: {e}")
         sys.exit(1)
@@ -263,8 +186,9 @@ def deploy_agent():
         try:
             status_response = agentcore_runtime.status()
             status = status_response.endpoint['status']
+
             if status == 'READY':
-                print("Agent is READY!")
+                print("MCP Server is READY!")
                 break
             elif status in ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED']:
                 print(f"Deployment failed with status: {status}")
@@ -283,31 +207,53 @@ def deploy_agent():
 
     # Store deployment info for agent to use
     print("Storing deployment information...")
+
     # Store in Parameter Store for easy retrieval
     ssm_client = boto3.client('ssm', region_name=region)
+
     try:
         ssm_client.put_parameter(
-            Name='AgentRuntimeArn',
+            Name='telco_anomaly_detection_mcp_server_url',
             Value=launch_result.agent_arn,
             Type='String',
-            Description='Telco Network Operations Agent ARN',
+            Description='Telco Anomaly Detection MCP Server ARN',
             Overwrite=True
         )
-        print("✅ AgentRuntimeArn stored in SSM Parameter store")
+
+        # Construct MCP URL
+        encoded_arn = launch_result.agent_arn.replace(':', '%3A').replace('/', '%2F')
+        mcp_url = f"https://bedrock-agentcore.{region}.amazonaws.com/runtimes/{encoded_arn}/invocations"
+
+        ssm_client.put_parameter(
+            Name='telco_anomaly_detection_mcp_server_url',
+            Value=mcp_url,
+            Type='String',
+            Description='Telco Anomaly Detection MCP Server URL',
+            Overwrite=True
+        )
+
+        print("✅ Deployment info stored")
     except Exception as e:
         print(f"Warning: Could not store in Parameter Store: {e}")
 
     # Print summary
     print("\n" + "="*60)
-    print("Agent Deployment Successful!!")
+    print("MCP Server Deployment Successful!!")
     print("="*60)
-    print(f"Agent Name: {agent_name}")
+    print(f"MCP Server Name: {mcp_server_name}")
+    print ("launch_result :: ", launch_result)
     print(f"Agent ARN: {launch_result.agent_arn}")
-    
+    print (f"anomaly_mcp_runtime_role arn :: {anomaly_mcp_runtime_role}")
+    print(f"MCP URL: {mcp_url}")
+    print("\n[bold]Available Tools:[/bold]")
+    print("  - detect_anomaly(market: str)")
+    print("  - get_anomaly_details(anomaly_id: str)")
+    print("  - list_active_markets()")
+
     return launch_result
 
 
 if __name__ == "__main__":
-    telco_networkops_agent_runtime_role = setup_agent_runtime_role()
-    print ("telco_networkops_agent_runtime_role :: ", telco_networkops_agent_runtime_role)
-    deploy_agent()
+    anomaly_mcp_runtime_role = setup_mcp_runtime_role()
+    print ("anomaly_mcp_runtime_role :: ", anomaly_mcp_runtime_role)
+    deploy_mcp_server()
